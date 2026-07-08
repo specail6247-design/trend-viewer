@@ -71,6 +71,19 @@ def main():
         data[key] = safe(key, _get, {empty_key: [], "accounts": [], "fetchedAt": 0})
         print(f"  {key}: {len(data[key].get(empty_key) or [])}개", flush=True)
 
+    # 릴스는 인스타그램이 데이터센터 IP를 차단해 Actions에서는 못 가져옵니다.
+    # 맥(가정용 IP)이 미리 올려둔 시드 파일이 있으면 그걸 씁니다.
+    if not data["reels"]["reels"]:
+        try:
+            with open(os.path.join(HERE, "reels_seed.json")) as f:
+                seed = json.load(f)
+            if seed.get("reels"):
+                data["reels"] = seed
+                print(f"  reels: 시드 파일 사용 ({len(seed['reels'])}개, "
+                      f"{time.strftime('%m/%d %H:%M', time.localtime(seed.get('fetchedAt', 0)))} 수집)", flush=True)
+        except (OSError, json.JSONDecodeError):
+            print("  reels: 시드 파일 없음", flush=True)
+
     data["fetchedAt"] = time.time()
 
     site = os.path.join(HERE, "site")
