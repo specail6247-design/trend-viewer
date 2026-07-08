@@ -1,0 +1,8 @@
+# 빌드 산출물 (GitHub Actions가 매번 새로 만듭니다)
+site/
+
+# 로컬 전용
+__pycache__/
+.claude/
+*_accounts.json
+.DS_Store
