@@ -1,0 +1,8 @@
+# Render 무료 호스팅 설정 — 저장소를 Blueprint로 연결하면 자동으로 읽힙니다.
+services:
+  - type: web
+    name: trend-viewer
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python3 server.py"
