@@ -20,4 +20,7 @@ echo ""
 # 2초 뒤 브라우저 자동 오픈
 ( sleep 2 && open "http://localhost:8778" ) &
 
+# 릴스 시드 업로드: 웹 버전(GitHub Pages) 릴스 탭을 최신으로 유지합니다 (백그라운드)
+( python3 push_reels_seed.py >> /tmp/trend-viewer-reels-seed.log 2>&1 ) &
+
 python3 server.py
