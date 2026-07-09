@@ -23,6 +23,14 @@
   #refreshBtn:hover { border-color: var(--accent2); }
   /* 정적 모드(GitHub Pages): 서버가 필요한 기능(검색·계정 편집)은 숨깁니다 */
   .static #searchForm, .static .addbar, .static .acc-chip button { display: none !important; }
+  /* TOP10 분석 박스 */
+  .analysis { display: none; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; }
+  .analysis.on { display: block; }
+  .analysis h3 { font-size: 14px; margin: 0 0 9px; color: var(--accent2); }
+  .analysis h3 small { font-weight: normal; opacity: .6; margin-left: 6px; }
+  .analysis ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 7px; }
+  .analysis li { font-size: 13px; line-height: 1.55; }
+  .analysis li b { color: var(--accent2); }
   #updated { color: var(--muted); font-size: 12px; }
 
   .tabs { display: flex; gap: 8px; padding: 14px 24px 0; flex-wrap: wrap; }
@@ -172,6 +180,7 @@
 <main>
   <div id="videoView">
     <div class="status" id="status">불러오는 중...</div>
+    <div class="analysis" id="vidAnalysis"></div>
     <div class="grid" id="grid"></div>
   </div>
 
@@ -209,6 +218,7 @@
       <span class="sortcount" id="reelsCount"></span>
     </div>
     <div class="status" id="reelsStatus">불러오는 중...</div>
+    <div class="analysis" id="reelsAnalysis"></div>
     <div class="grid shorts" id="reelsGrid"></div>
   </div>
 
@@ -228,6 +238,7 @@
       <span class="sortcount" id="xCount"></span>
     </div>
     <div class="status" id="xStatus">불러오는 중...</div>
+    <div class="analysis" id="xAnalysis"></div>
     <div class="postlist" id="xList"></div>
   </div>
 
@@ -247,6 +258,7 @@
       <span class="sortcount" id="thCount"></span>
     </div>
     <div class="status" id="thStatus">불러오는 중...</div>
+    <div class="analysis" id="thAnalysis"></div>
     <div class="postlist" id="thList"></div>
     <div id="thFallback" style="display:none"></div>
   </div>
@@ -267,6 +279,7 @@
       <span class="sortcount" id="ttCount"></span>
     </div>
     <div class="status" id="ttStatus">불러오는 중...</div>
+    <div class="analysis" id="ttAnalysis"></div>
     <div class="grid shorts" id="ttGrid"></div>
   </div>
 </main>
@@ -382,7 +395,7 @@ async function loadVideos(force = false) {
       '업데이트: ' + new Date(data.fetchedAt * 1000).toLocaleTimeString('ko-KR');
     vidData = data.videos;
     vidHasLikes = wantLikes;
-    if (!vidData.length) { status.style.display = 'block'; status.textContent = '결과가 없습니다.'; return; }
+    if (!vidData.length) { status.style.display = 'block'; status.textContent = '결과가 없습니다.'; renderAnalysis('vidAnalysis', []); return; }
     status.style.display = 'none';
     renderVideos();
   } catch (e) {
@@ -397,6 +410,12 @@ function renderVideos() {
   const sorted = vidData.slice().sort((a, b) => (b[f] || 0) - (a[f] || 0));
   grid.innerHTML = '';
   sorted.forEach((v, i) => grid.appendChild(videoCard(v, i + 1)));
+  const perLabel = { day: '오늘', week: '이번 주', month: '이번 달' }[state.period] || '';
+  renderAnalysis('vidAnalysis', analyzeRank(sorted, {
+    title: 'title', name: 'channel', nameLabel: '채널',
+    count: f, countLabel: f === 'likes' ? '좋아요' : '조회수',
+    engage: vidHasLikes, extra: [recencyInsight],
+  }), `${state.search ? '검색: ' + state.search : state.category} · ${perLabel}`);
 }
 function videoCard(v, rank) {
   const el = document.createElement('div');
@@ -551,6 +570,10 @@ function renderReels() {
   });
   document.getElementById('reelsCount').textContent =
     `${label[f]} 기준 · 총 ${sorted.length}개`;
+  renderAnalysis('reelsAnalysis', analyzeRank(sorted, {
+    title: 'title', name: 'account', nameLabel: '계정',
+    count: f, countLabel: label[f], engage: true,
+  }), label[f] + '순');
 }
 function renderAccountChips(accounts) {
   const box = document.getElementById('accChips');
@@ -657,6 +680,91 @@ const fmt2 = n => {
   return (n || 0).toLocaleString('ko-KR');
 };
 
+/* ---------- TOP10 분석: 상위 10개의 특징·공통점·이슈 포인트를 요약 ---------- */
+const STOPWORDS = new Set(('그리고,하지만,진짜,정말,완전,너무,이거,저거,그냥,바로,오늘,드디어,결국,최초,충격,공개,' +
+  '영상,쇼츠,모음,레전드,순간,근데,해서,하는,하면,합니다,됩니다,있는,없는,라는,이유,방법,후기,리뷰,브이로그,' +
+  'shorts,short,the,and,for,with,this,that,you,are,was,were,from,have,has,not,but,our,all,can,will,its,' +
+  'in,on,of,to,is,at,by,or,as,we,be,it,an,new,how,what,why,when,more,just,now,out,up,about,into,your,my,vs,feat,' +
+  'ep,http,https,www,com,co,kr,net,amp,gt,lt,설명,없음,' +
+  're,ve,ll,don,isn,won,didn,doesn,let,got,get,make,see,here,there,they,them,their,she,his,her,him,' +
+  'fyp,foryou,foryoupage,viral,trending,follow,like,video')
+  .split(','));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const trunc = (s, n) => { s = String(s || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n) + '…' : s; };
+
+function topKeywords(items, field, n = 3) {
+  const freq = {};
+  items.forEach(v => {
+    const words = String(v[field] || '').toLowerCase()
+      .replace(/https?:\/\/\S+|@\S+/g, ' ')   // 링크·멘션은 키워드에서 제외
+      .split(/[^0-9a-z가-힣]+/)
+      .filter(w => w.length >= 2 && !STOPWORDS.has(w) && !/^\d+$/.test(w));
+    new Set(words).forEach(w => { freq[w] = (freq[w] || 0) + 1; });
+  });
+  return Object.entries(freq).filter(e => e[1] >= 2).sort((a, b) => b[1] - a[1]).slice(0, n);
+}
+
+function analyzeRank(items, cfg) {
+  const top = items.slice(0, 10);
+  if (top.length < 4) return [];
+  const out = [];
+  // ① 공통 키워드 → 왜 이슈인지
+  const kw = topKeywords(top, cfg.title);
+  if (kw.length) out.push(`🔑 <b>공통 키워드</b> — ${kw.map(([w, c]) => `‘${esc(w)}’ ${c}개`).join(' · ')}`);
+  if (kw[0] && kw[0][1] >= 3)
+    out.push(`📈 <b>왜 이슈?</b> — 상위권 ${kw[0][1]}개가 ‘${esc(kw[0][0])}’ 관련. 지금 이 판의 최대 화두예요`);
+  // ② 제작자 집중도
+  const by = {};
+  top.forEach(v => { const n2 = v[cfg.name]; if (n2) by[n2] = (by[n2] || 0) + 1; });
+  const ranked = Object.entries(by).sort((a, b) => b[1] - a[1]);
+  if (ranked[0] && ranked[0][1] >= 3)
+    out.push(`👑 <b>독주 체제</b> — ${cfg.nameLabel} ‘${esc(ranked[0][0])}’ 혼자 ${ranked[0][1]}개 진입. 이 ${cfg.nameLabel}만 봐도 흐름이 잡혀요`);
+  else if (ranked.length === top.length)
+    out.push(`🌈 <b>고른 경쟁</b> — 상위권이 전부 다른 ${cfg.nameLabel}. 특정 강자 없이 소재로 승부 중`);
+  // ③ 1위 쏠림 vs 접전
+  const vals = top.map(v => v[cfg.count] || 0).filter(x => x > 0);
+  if (vals.length >= 5) {
+    const r = vals[0] / vals[4];
+    if (r >= 3) out.push(`🚀 <b>1위 쏠림</b> — 1위 ${cfg.countLabel} ${fmt2(vals[0])}, 5위의 ${r.toFixed(1)}배. 압도적 원톱이 만든 판`);
+    else if (r <= 1.7) out.push(`⚖️ <b>초접전</b> — 1~5위 ${cfg.countLabel} 격차가 ${r.toFixed(1)}배뿐. 순위가 언제든 뒤집힐 수 있어요`);
+  }
+  // ④ 참여율(조회 대비 좋아요)이 유난히 높은 콘텐츠
+  if (cfg.engage) {
+    const cand = top.filter(v => (v.views || 0) > 1000 && (v.likes || 0) > 0);
+    if (cand.length >= 3) {
+      const best = cand.slice().sort((a, b) => b.likes / b.views - a.likes / a.views)[0];
+      const pct = best.likes / best.views * 100;
+      if (pct >= 1.5) out.push(`💕 <b>팬덤형 흥행</b> — ‘${esc(trunc(best[cfg.title], 18))}’ 참여율 ${pct.toFixed(1)}%. 보는 사람마다 좋아요를 누르는 충성 시청층`);
+    }
+  }
+  (cfg.extra || []).forEach(fn => { const b = fn(top); if (b) out.push(b); });
+  return out.slice(0, 5);
+}
+
+// 유튜브·쇼츠 전용: 얼마나 최신 영상들인지
+function recencyInsight(top) {
+  const fresh = top.filter(v => /^(\d+(분|시간) 전)/.test(v.published || '')).length;
+  if (fresh >= 6) return `⏱️ <b>따끈한 판</b> — ${top.length}개 중 ${fresh}개가 24시간 안에 올라온 영상. 회전이 아주 빠른 주제예요`;
+  return '';
+}
+// X·스레드 전용: 좋아요 대비 댓글이 많으면 논쟁형
+function debateInsight(top) {
+  const cand = top.filter(p => (p.likes || 0) > 100);
+  if (cand.length < 3) return '';
+  const best = cand.slice().sort((a, b) => b.replies / b.likes - a.replies / a.likes)[0];
+  const r = best.replies / best.likes;
+  if (r >= 0.15) return `🗣️ <b>갑론을박</b> — ‘${esc(trunc(best.text, 18))}’는 좋아요 대비 댓글 비율 ${(r * 100).toFixed(0)}%. 반응이 갈리며 토론 중`;
+  return '';
+}
+
+function renderAnalysis(elId, bullets, label) {
+  const box = document.getElementById(elId);
+  if (!box) return;
+  if (!bullets.length) { box.classList.remove('on'); box.innerHTML = ''; return; }
+  box.classList.add('on');
+  box.innerHTML = `<h3>📊 TOP10 분석 <small>${esc(label)}</small></h3><ul>${bullets.map(b => `<li>${b}</li>`).join('')}</ul>`;
+}
+
 function renderSocial(kind) {
   const listEl = document.getElementById(kind === 'x' ? 'xList' : 'thList');
   const cntEl = document.getElementById(kind === 'x' ? 'xCount' : 'thCount');
@@ -665,6 +773,13 @@ function renderSocial(kind) {
   listEl.innerHTML = '';
   sorted.forEach((p, i) => listEl.appendChild(postCard(p, i + 1, kind)));
   cntEl.textContent = sorted.length ? `총 ${sorted.length}개 글` : '';
+  const sKey = social[kind].sort;
+  const sLabel = sKey === 'reposts' ? (kind === 'threads' ? '리포스트' : '리트윗')
+    : { likes: '좋아요', replies: '댓글', views: '조회수' }[sKey];
+  renderAnalysis(kind === 'x' ? 'xAnalysis' : 'thAnalysis', analyzeRank(sorted, {
+    title: 'text', name: 'account', nameLabel: '계정',
+    count: f, countLabel: sLabel, extra: [debateInsight],
+  }), sLabel + '순');
 }
 
 async function loadSocial(kind, force = false) {
@@ -683,6 +798,7 @@ async function loadSocial(kind, force = false) {
     social[kind].data = data.posts || [];
     if (!social[kind].data.length) {
       statusEl.style.display = 'none';
+      renderAnalysis(kind === 'x' ? 'xAnalysis' : 'thAnalysis', []);
       if (kind === 'threads') showThreadsFallback(data.accounts);
       else statusEl.style.display = 'block', statusEl.textContent = '가져온 글이 없습니다. 계정을 확인하거나 잠시 후 새로고침해 주세요.';
       return;
@@ -839,6 +955,10 @@ function renderTikTok() {
     grid.appendChild(el);
   });
   document.getElementById('ttCount').textContent = `${label[f]} 기준 · 총 ${sorted.length}개`;
+  renderAnalysis('ttAnalysis', analyzeRank(sorted, {
+    title: 'title', name: 'account', nameLabel: '계정',
+    count: f, countLabel: label[f], engage: true,
+  }), label[f] + '순');
 }
 function renderTtChips(accounts) {
   const box = document.getElementById('ttChips');
