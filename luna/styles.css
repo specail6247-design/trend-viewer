@@ -1,0 +1,192 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0d0d14;
+  --card: #16161f;
+  --card2: #1e1e2a;
+  --line: #2a2a3a;
+  --txt: #eeeef4;
+  --sub: #9a9ab0;
+  --grad: linear-gradient(90deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+  --accent: #e6683c;
+}
+
+body {
+  background: var(--bg);
+  color: var(--txt);
+  font-family: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", -apple-system, sans-serif;
+  line-height: 1.6;
+  padding-bottom: 60px;
+}
+
+.top { text-align: center; padding: 28px 16px 12px; }
+.top h1 {
+  font-size: 1.7rem;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.top p { color: var(--sub); font-size: .9rem; margin-top: 4px; }
+
+.tabs {
+  display: flex; gap: 8px; justify-content: center;
+  padding: 14px 16px; position: sticky; top: 0;
+  background: rgba(13,13,20,.92); backdrop-filter: blur(8px); z-index: 50;
+}
+.tab {
+  border: 1px solid var(--line); background: var(--card); color: var(--sub);
+  padding: 10px 18px; border-radius: 999px; font-size: .95rem; cursor: pointer;
+  font-weight: 600; transition: all .15s;
+}
+.tab.active { background: var(--grad); color: #fff; border-color: transparent; }
+
+.panel { display: none; max-width: 1100px; margin: 0 auto; padding: 16px; }
+.panel.active { display: block; }
+
+.notice {
+  background: var(--card2); border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px 18px; font-size: .92rem; color: var(--sub); margin-bottom: 18px;
+}
+.notice b { color: var(--txt); }
+
+/* ---- 팁 카드 ---- */
+.tip-card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  margin-bottom: 14px; overflow: hidden;
+}
+.tip-head {
+  display: flex; align-items: center; gap: 12px; padding: 16px 18px; cursor: pointer;
+  user-select: none;
+}
+.tip-num {
+  background: var(--grad); color: #fff; font-weight: 800; border-radius: 10px;
+  padding: 4px 10px; font-size: .85rem; white-space: nowrap;
+}
+.tip-head h3 { font-size: 1.05rem; flex: 1; }
+.tip-level { font-size: .75rem; color: var(--sub); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+.tip-arrow { color: var(--sub); transition: transform .2s; }
+.tip-card.open .tip-arrow { transform: rotate(90deg); }
+.tip-body { display: none; padding: 0 18px 18px; }
+.tip-card.open .tip-body { display: block; }
+
+.tip-hook { background: var(--card2); border-radius: 10px; padding: 10px 14px; font-size: .92rem; margin-bottom: 12px; }
+.tip-hook b { color: var(--accent); }
+
+.scene {
+  border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+  font-size: .9rem;
+}
+.scene-head { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+.scene-time { background: var(--card2); border-radius: 6px; padding: 1px 8px; font-size: .78rem; color: var(--accent); font-weight: 700; }
+.scene-label { font-weight: 700; }
+.scene-action { color: var(--sub); }
+.ai-prompt {
+  margin-top: 8px; background: #10101a; border: 1px dashed #3a3a52; border-radius: 8px;
+  padding: 8px 10px; font-size: .8rem; color: #8ab4f8; font-family: monospace;
+  cursor: pointer; word-break: break-all;
+}
+.ai-prompt::before { content: "🤖 AI 영상 프롬프트 (탭해서 복사)  "; color: var(--sub); font-family: inherit; display: block; font-size: .75rem; margin-bottom: 2px; }
+.ai-prompt.copied { border-color: #4caf50; }
+
+.tip-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+/* ---- 버튼 ---- */
+.btn {
+  border: 1px solid var(--line); background: var(--card2); color: var(--txt);
+  border-radius: 10px; padding: 10px 16px; font-size: .9rem; cursor: pointer; font-weight: 600;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--grad); border: none; color: #fff; }
+.btn.big { width: 100%; padding: 14px; font-size: 1.05rem; margin-top: 10px; }
+.btn.small { padding: 6px 12px; font-size: .82rem; }
+.btn.ghost { background: transparent; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ---- 에디터 ---- */
+.editor-grid { display: grid; grid-template-columns: 1fr 360px; gap: 16px; align-items: start; }
+@media (max-width: 900px) { .editor-grid { grid-template-columns: 1fr; } .preview-col { order: -1; } }
+
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  padding: 18px; margin-bottom: 14px;
+}
+.card h2 { font-size: 1rem; margin-bottom: 12px; }
+.card h3 { font-size: .9rem; margin: 14px 0 8px; }
+.card.sticky { position: sticky; top: 76px; }
+
+select, input[type="text"], input[type="number"] {
+  width: 100%; background: var(--card2); border: 1px solid var(--line); color: var(--txt);
+  border-radius: 10px; padding: 10px 12px; font-size: .9rem; font-family: inherit;
+}
+input[type="number"] { width: 72px; }
+input[type="file"] { color: var(--sub); font-size: .85rem; }
+
+.field { margin-bottom: 10px; }
+.field label { display: block; font-size: .8rem; color: var(--sub); margin-bottom: 4px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.row label { font-size: .85rem; color: var(--sub); }
+.hint { font-size: .8rem; color: var(--sub); margin-top: 8px; }
+.check { font-size: .9rem; display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+
+.dropzone {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  border: 2px dashed var(--line); border-radius: 14px; padding: 26px 16px;
+  cursor: pointer; text-align: center; transition: border-color .15s;
+}
+.dropzone:hover, .dropzone.drag { border-color: var(--accent); }
+.dropzone small { color: var(--sub); font-size: .78rem; }
+
+.clip-item {
+  display: flex; gap: 10px; align-items: center; background: var(--card2);
+  border-radius: 12px; padding: 8px 10px; margin-top: 8px; font-size: .85rem;
+}
+.clip-thumb { width: 46px; height: 70px; border-radius: 8px; object-fit: cover; background: #000; flex-shrink: 0; }
+.clip-info { flex: 1; min-width: 0; }
+.clip-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.clip-trim { display: flex; gap: 6px; align-items: center; color: var(--sub); font-size: .78rem; margin-top: 3px; flex-wrap: wrap; }
+.clip-trim input { padding: 3px 6px; width: 60px; font-size: .8rem; }
+.clip-btns { display: flex; flex-direction: column; gap: 3px; }
+.clip-btns button {
+  background: none; border: 1px solid var(--line); color: var(--sub); border-radius: 6px;
+  cursor: pointer; font-size: .7rem; padding: 2px 7px;
+}
+.clip-btns button:hover { color: var(--txt); border-color: var(--accent); }
+
+.cap-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+.cap-row input[type="text"] { flex: 1; }
+.cap-row input[type="number"] { width: 60px; padding: 8px 6px; }
+.cap-del { background: none; border: none; color: var(--sub); cursor: pointer; font-size: 1rem; }
+.cap-del:hover { color: #ff5470; }
+
+.canvas-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
+#preview-canvas {
+  width: 100%; max-width: 250px; aspect-ratio: 9/16; border-radius: 16px;
+  background: #000; border: 1px solid var(--line);
+}
+
+#export-status { font-size: .85rem; color: var(--accent); margin-top: 10px; min-height: 1.2em; font-weight: 600; }
+#export-result video { width: 100%; max-width: 250px; border-radius: 12px; margin: 10px auto 6px; display: block; }
+#export-result a.dl {
+  display: block; text-align: center; background: var(--grad); color: #fff; font-weight: 700;
+  padding: 12px; border-radius: 10px; text-decoration: none; margin-top: 8px;
+}
+
+/* ---- 홍보 가이드 ---- */
+.guide { list-style: none; }
+.guide li { padding: 8px 0; border-bottom: 1px solid var(--line); font-size: .92rem; }
+.guide li:last-child { border-bottom: none; }
+.guide b { color: var(--accent); }
+.check-list li::before { content: "☑️ "; }
+
+.tag-set {
+  background: var(--card2); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 14px; margin-bottom: 10px; cursor: pointer; font-size: .85rem;
+}
+.tag-set:hover { border-color: var(--accent); }
+.tag-set b { display: block; margin-bottom: 4px; }
+.tag-set span { color: #8ab4f8; word-break: break-all; }
+.tag-set.copied { border-color: #4caf50; }
+.tag-set.copied b::after { content: " — 복사됨 ✓"; color: #4caf50; }
+
+.foot { text-align: center; color: var(--sub); font-size: .8rem; padding: 30px 16px; }

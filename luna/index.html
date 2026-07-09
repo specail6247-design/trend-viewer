@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>루나 릴스 스튜디오 — Insta360 Luna Ultra 팁 릴스 제작기</title>
+<meta name="description" content="인스타360 루나 울트라 팁 릴스를 브라우저에서 바로 만드는 도구. 기획안 12개 + 자동 자막 렌더링 + 홍보 가이드">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="top">
+  <h1>🌙 루나 릴스 스튜디오</h1>
+  <p>Insta360 Luna Ultra 팁 릴스 — 기획부터 완성 mp4까지 브라우저에서 끝내기</p>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="tips">📋 기획안 12개</button>
+  <button class="tab" data-tab="editor">🎬 릴스 만들기</button>
+  <button class="tab" data-tab="promo">🚀 홍보 가이드</button>
+</nav>
+
+<!-- ========== 탭 1: 기획안 ========== -->
+<main id="tab-tips" class="panel active">
+  <div class="notice">
+    각 기획안에는 <b>장면별 촬영 가이드</b>와 <b>AI 영상 생성용 프롬프트</b>(Kling·Runway·Sora 등에 붙여넣기)가 들어있어요.
+    직접 찍은 클립이든 AI로 만든 클립이든, <b>"이 기획안으로 만들기"</b>를 누르면 자막이 자동으로 채워진 에디터로 넘어갑니다.
+  </div>
+  <div id="tips-list"></div>
+</main>
+
+<!-- ========== 탭 2: 에디터 ========== -->
+<main id="tab-editor" class="panel">
+  <div class="editor-grid">
+    <section class="ed-col">
+
+      <div class="card">
+        <h2>① 기획안 선택 (선택사항)</h2>
+        <select id="template-select">
+          <option value="">— 자유 모드 (직접 자막 입력) —</option>
+        </select>
+        <p class="hint">기획안을 고르면 타이틀과 자막이 자동으로 채워져요. 자유롭게 수정 가능!</p>
+      </div>
+
+      <div class="card">
+        <h2>② 영상 클립 올리기</h2>
+        <label class="dropzone" id="dropzone">
+          <input type="file" id="clip-input" accept="video/*" multiple hidden>
+          <span>📁 여기를 눌러 영상 선택 (여러 개 가능)</span>
+          <small>직접 촬영한 클립 + AI로 만든 클립 모두 OK · 순서대로 이어붙여집니다</small>
+        </label>
+        <div id="clip-list"></div>
+        <div class="row">
+          <label>목표 길이 <input type="number" id="target-dur" value="55" min="10" max="90" step="1"> 초</label>
+          <button id="auto-fit" class="btn small">⚡ 클립 시간 자동 배분</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>③ 텍스트 꾸미기</h2>
+        <div class="field"><label>상단 배지</label><input type="text" id="badge-text" placeholder="예: 루나 울트라 꿀팁 EP.01" value="루나 울트라 꿀팁"></div>
+        <div class="field"><label>타이틀</label><input type="text" id="title-text" placeholder="예: 흔들림 0% 워킹샷"></div>
+        <div class="field"><label>워터마크 (내 계정)</label><input type="text" id="watermark-text" placeholder="@내계정" value="@"></div>
+        <h3>자막 (초 단위)</h3>
+        <div id="caption-list"></div>
+        <button id="add-caption" class="btn small">➕ 자막 추가</button>
+      </div>
+
+      <div class="card">
+        <h2>④ 소리</h2>
+        <label class="check"><input type="checkbox" id="original-audio" checked> 클립 원본 소리 사용</label>
+        <div class="field"><label>배경음악 (선택)</label><input type="file" id="bgm-input" accept="audio/*"></div>
+        <p class="hint">💡 추천: 여기선 소리 없이 내보내고, 인스타그램 앱에서 <b>트렌딩 오디오</b>를 입히면 노출에 훨씬 유리해요.</p>
+      </div>
+
+    </section>
+
+    <section class="ed-col preview-col">
+      <div class="card sticky">
+        <h2>미리보기 & 내보내기</h2>
+        <div class="canvas-wrap">
+          <canvas id="preview-canvas" width="1080" height="1920"></canvas>
+        </div>
+        <div class="row">
+          <button id="btn-preview" class="btn">▶️ 미리보기</button>
+          <button id="btn-stop" class="btn ghost">⏹ 정지</button>
+        </div>
+        <button id="btn-export" class="btn primary big">🎬 릴스 만들기 (mp4 렌더링)</button>
+        <p class="hint">렌더링은 영상 길이만큼 걸려요 (55초 영상 = 약 55초). 렌더링 중 이 탭을 벗어나지 마세요!</p>
+        <div id="export-status"></div>
+        <div id="export-result"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- ========== 탭 3: 홍보 가이드 ========== -->
+<main id="tab-promo" class="panel">
+
+  <div class="card">
+    <h2>📅 업로드 전략</h2>
+    <ul class="guide">
+      <li><b>시리즈로 묶기</b> — "루나 울트라 꿀팁 EP.01 ~ EP.12"처럼 넘버링하면 다음 편이 궁금해서 팔로우해요.</li>
+      <li><b>주 3회 고정 요일</b> — 예: 화·목·토. 12개면 4주 분량, 한 달 캠페인 완성.</li>
+      <li><b>업로드 시간</b> — 한국 기준 <b>평일 11~13시</b> 또는 <b>19~21시</b>가 반응이 좋아요.</li>
+      <li><b>커버(썸네일) 통일</b> — 같은 폰트·색으로 "EP.03 | 슬로우모션" 식으로 통일하면 프로필이 시리즈물처럼 보여요.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>✅ 업로드 직전 체크리스트</h2>
+    <ul class="guide check-list">
+      <li>첫 3초에 훅이 있는가? (질문/반전/비교)</li>
+      <li>인스타그램 앱에서 <b>트렌딩 오디오</b>를 입혔는가? (음량 낮게 깔기만 해도 노출 ↑)</li>
+      <li>캡션 첫 줄이 훅인가? (더보기 누르기 전에 보이는 건 첫 줄뿐)</li>
+      <li>해시태그는 5~10개로 정제했는가? (아래 세트 복사)</li>
+      <li>커버 이미지를 지정했는가? (프로필 그리드용)</li>
+      <li>업로드 후 1시간 내 댓글에 전부 답했는가? (초반 반응이 노출을 결정)</li>
+      <li>스토리에 릴스를 공유하고 투표/질문 스티커를 붙였는가?</li>
+      <li>고정 댓글에 다음 편 예고를 남겼는가?</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>#️⃣ 해시태그 세트 (탭해서 복사)</h2>
+    <div class="tag-set" data-copy="#인스타360 #insta360 #루나울트라 #lunaultra #짐벌카메라 #브이로그카메라 #영상꿀팁 #릴스꿀팁 #카메라추천 #브이로그">
+      <b>기본 세트</b><span>#인스타360 #insta360 #루나울트라 #lunaultra #짐벌카메라 #브이로그카메라 #영상꿀팁 #릴스꿀팁 #카메라추천 #브이로그</span>
+    </div>
+    <div class="tag-set" data-copy="#루나울트라 #lunaultra #여행카메라 #여행스타그램 #인생샷 #노을맛집 #시네마틱 #travelreels #insta360 #여행브이로그">
+      <b>여행·풍경용</b><span>#루나울트라 #lunaultra #여행카메라 #여행스타그램 #인생샷 #노을맛집 #시네마틱 #travelreels #insta360 #여행브이로그</span>
+    </div>
+    <div class="tag-set" data-copy="#루나울트라 #lunaultra #육아스타그램 #가족영상 #아이촬영 #반려견스타그램 #일상기록 #insta360 #브이로그카메라 #영상꿀팁">
+      <b>가족·일상용</b><span>#루나울트라 #lunaultra #육아스타그램 #가족영상 #아이촬영 #반려견스타그램 #일상기록 #insta360 #브이로그카메라 #영상꿀팁</span>
+    </div>
+    <div class="tag-set" data-copy="#루나울트라 #lunaultra #색보정 #다빈치리졸브 #시네마틱 #영상편집 #filmmaking #videography #insta360 #영상제작">
+      <b>전문가·편집용</b><span>#루나울트라 #lunaultra #색보정 #다빈치리졸브 #시네마틱 #영상편집 #filmmaking #videography #insta360 #영상제작</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>💬 참여 유도 문구 (고정 댓글용)</h2>
+    <ul class="guide">
+      <li>"다음 편은 [다음 팁 제목]! 궁금하면 팔로우 🔔"</li>
+      <li>"여러분은 루나 울트라로 뭘 제일 찍고 싶어요? 👇"</li>
+      <li>"따라 해보고 결과물 스토리에 태그해 주세요, 제가 공유할게요!"</li>
+    </ul>
+  </div>
+
+</main>
+
+<footer class="foot">루나 릴스 스튜디오 · 영상은 브라우저 안에서만 처리되고 어디에도 업로드되지 않아요 🔒</footer>
+
+<script src="tips.js"></script>
+<script src="app.js"></script>
+<script src="editor.js"></script>
+</body>
+</html>

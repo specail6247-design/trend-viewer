@@ -90,6 +90,9 @@ def main():
     shutil.rmtree(site, ignore_errors=True)
     os.makedirs(os.path.join(site, "data"))
     shutil.copy(os.path.join(HERE, "index.html"), site)
+    luna = os.path.join(HERE, "luna")  # 루나 릴스 스튜디오 (정적 앱)도 같이 배포
+    if os.path.isdir(luna):
+        shutil.copytree(luna, os.path.join(site, "luna"))
     with open(os.path.join(site, "data", "all.json"), "w") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
     size = os.path.getsize(os.path.join(site, "data", "all.json"))
